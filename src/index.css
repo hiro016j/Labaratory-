@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+.button-shadow{
+    box-shadow: 1px 1px 3px #3f3f3f;
+    transition: 0.2s;
+}
+.button-shadow:hover{
+    box-shadow: 2px 2px 5px #5050506e;
+}
+.border-hover{
+    border:2px solid #101828;
+    transition: 0.2s;
+}
+.border-hover span{
+    color: white;
+}
+.border-hover:hover{
+    border: 2px solid;
+    background-color: #101828;
+}

@@ -1,0 +1,22 @@
+⚡️ Maktab fizikasi uchun muhim elektron komponentlar jadvali
+
+#  | Inglizcha nomi        | O‘zbekcha nomi           | Nima qiladi / Vazifasi
+---|------------------------|--------------------------|------------------------------------------------------------
+1  | Battery                | Batareya                 | Elektr toki manbai, elektr energiyasini ta'minlaydi
+2  | LED (Light Emitting Diode) | Yorug‘lik chiqaruvchi diod | Tok o'tganda yorug‘lik chiqaradi
+3  | Resistor               | Rezistor                 | Tok kuchini chegaralaydi, qarshilik ko‘rsatadi
+4  | Switch / Button        | Tugma / Kalit            | Zanjirni ochish yoki yopish uchun ishlatiladi
+5  | Buzzer                 | Signalizator             | Tok bilan ishlaganda tovush chiqaradi
+6  | Capacitor              | Kondensator              | Elektr zaryadni saqlaydi va zaruratda bo‘shatadi
+7  | Inductor / Coil        | Induktans (g‘altak)      | Magnit maydon hosil qiladi, o‘zgaruvchan tokda tormozlovchi bo‘ladi
+8  | Diode                  | Diod                     | Tokni faqat bir yo‘nalishda o‘tkazadi
+9  | Potentiometer          | Potensiometr             | Qarshilikni qo‘lda boshqarish mumkin
+10 | Light Bulb (Lamp)      | Chiroq (Lampa)           | Tok ta’sirida yonadi, yorug‘lik beradi
+11 | Motor (DC Motor)       | Elektrodvigatel          | Elektr energiyasini aylanish harakatiga aylantiradi
+12 | Solar Cell / Panel     | Quyosh batareyasi        | Quyosh nurlarini elektr energiyasiga aylantiradi
+13 | Fuse                   | Sug‘urta (Plomba)        | Zanjirda haddan ortiq tok bo‘lsa, uzilib zanjirni himoya qiladi
+14 | Ammeter                | Ampermetr                | Zanjirdagi tok kuchini o‘lchaydi
+15 | Voltmeter              | Voltmetr                 | Zanjirdagi kuchlanishni o‘lchaydi
+16 | Thermistor             | Termorezistor            | Haroratga qarab qarshiligi o‘zgaradi
+17 | Photoresistor (LDR)    | Yorug‘likka sezgir rezistor | Yorug‘likka qarab qarshilik o‘zgaradi
+18 | Transformer            | Transformator            | Kuchlanmani oshirish yoki kamaytirish uchun
