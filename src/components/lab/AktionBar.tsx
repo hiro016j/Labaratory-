@@ -31,21 +31,6 @@ const marks = [
 const AktionBar: React.FC<aktion> = ({ type, id, isOn, objChange }) => {
     const batteryVoltages = [1.5, 3, 4.5, 6, 9, 12];
     const resistorValues = [10, 22, 47, 100, 220, 330, 470, 680, 1000];
-    const capacitorValues = [
-        { value: 0.1, unit: 'μF' },
-        { value: 0.22, unit: 'μF' },
-        { value: 0.47, unit: 'μF' },
-        { value: 1, unit: 'μF' },
-        { value: 2.2, unit: 'μF' },
-        { value: 4.7, unit: 'μF' },
-        { value: 10, unit: 'μF' },
-        { value: 22, unit: 'μF' },
-        { value: 47, unit: 'μF' },
-        { value: 100, unit: 'μF' },
-        { value: 220, unit: 'μF' },
-        { value: 470, unit: 'μF' },
-        { value: 1000, unit: 'μF' }
-    ];
 
     const [voltage, setVoltage] = useState(9);
     const [resistance, setResistance] = useState(220);
@@ -62,13 +47,6 @@ const AktionBar: React.FC<aktion> = ({ type, id, isOn, objChange }) => {
         objChange({ method: "PUT", id, isOn: value });
     }
 
-    const handleCapacitanceChange = (value: number) => {
-        const selected = capacitorValues.find(c => c.value === value);
-        if (selected) {
-            setCapacitance(selected);
-            objChange({ method: "PUT", id, isOn: value });
-        }
-    }
     const handleResistancePChange = (e: Event, newValue: number) => {
         e.preventDefault()
         setResistanceP(newValue as number); 
@@ -123,25 +101,7 @@ const AktionBar: React.FC<aktion> = ({ type, id, isOn, objChange }) => {
                                     <h1>Rezistor</h1>
                                 </div>
                             </div>
-                            : type === "capacitor" ?
-                                <div
-                                    className="border-hover w-[100px] h-[80px] overflow-hidden cursor-pointer text-white bg-gray-800 rounded-xl text-center"
-                                >
-                                    <select
-                                        className='w-full h-[40px] p-1.5'
-                                        value={capacitance.value}
-                                        onChange={(e) => handleCapacitanceChange(Number(e.target.value))}
-                                    >
-                                        {capacitorValues.map(c => (
-                                            <option className='bg-gray-900' key={c.value} value={c.value}>
-                                                {c.value} {c.unit}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="type w-full h-full flex justify-center pt-1.5  bg-green-900">
-                                        <h1>Kondensator</h1>
-                                    </div>
-                                </div> : type === "potentiometer" ?
+                            : type === "potentiometer" ?
                                     <div
                                         className="border-hover w-[400px] p-5 h-[80px] flex justify-items-center bg-gray-800 rounded-xl"
                                     >

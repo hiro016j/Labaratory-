@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Logo from "../../assets/IMG_20221223_175001_411.png";
 import battery from "../../assets/circuit-battery.png";
-import led from "../../assets/circuit-led.png";
+import led from "../../assets/circuit-led-of.png";
 import switcher from "../../assets/circuit-switch-of.png";
 import rezistor from "../../assets/circuit-rezistor.png"
 import capacitor from "../../assets/circuit-capacitor.png"
@@ -19,7 +19,7 @@ const elements = [
         type: "led",
         src: led,
         title: "LED",
-        resistance: 0,
+        resistance: 20,
         voltageDrop: 2,     // Qizil LED uchun o‘rtacha qiymat
         brightness: 0,
         isBurned: false,
@@ -32,7 +32,8 @@ const elements = [
         src: battery,
         title: "Batareya",
         isOn: 9,         // 9V batareya
-        current: 0
+        current: 0,
+        resistance: 0
     },
     {
         id: "drag3",
@@ -49,17 +50,9 @@ const elements = [
         type: "rezistor",
         src: rezistor,
         title: "Rezistor",
-        isOn: 1,    // 220 Ohm — LED bilan ishlash uchun klassik
-        current: 0
-    },
-    {
-        id: "drag5",
-        type: "capacitor",
-        src: capacitor,
-        title: "Kondensator",
-        isOn: 0.1,      // Doimiy tokda vaqtinchalik tok o‘tkazadi
-        voltage: 0,         // Zaryadlangan kuchlanish
-        current: 0
+        isOn: true,    // 220 Ohm — LED bilan ishlash uchun klassik
+        current: 0,
+        resistance: 220
     },
     {
         id: "drag6",
@@ -77,7 +70,8 @@ const elements = [
         src: potentiometer,
         title: "Potensiometr",
         isOn: 10000,   // O‘zgartiriladigan qiymat (max)
-        current: 0
+        current: 0,
+        resistance: 0,
     },
     {
         id: "drag8",

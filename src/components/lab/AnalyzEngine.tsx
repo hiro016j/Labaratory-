@@ -9,6 +9,7 @@ interface Point {
     isActive: boolean;
     currentVoltage: { id: number | null, voltage: number, type: "+" | "-" | null };
     ct: "start" | "end" | "point";
+    rezistans: number;
 }
 
 interface Connection {
@@ -22,7 +23,7 @@ interface Element {
     x: number,
     y: number,
     src: string,
-    resistance?: number,
+    resistance: number,
     voltage?: number,
     brightness?: number,
     isBurned?: boolean,
@@ -36,7 +37,7 @@ interface Element {
 interface AnalyzProp {
     elements: Element[],
     connections: Connection[],
-    onResult: (res1: Connection[], res2:Element[]) => void,
+    onResult: (res1: Connection[], res2: Element[]) => void,
 }
 interface ActivePoint {
     pathId: number;
@@ -44,17 +45,19 @@ interface ActivePoint {
 }
 
 const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult }) => {
+    const batteryElements = elements.filter(el => el.type === "battery");
     useEffect(() => {
-        const batteryElements = elements.filter(el => el.type === "battery");
         const id = requestIdleCallback(() => {
-            batteryAnalyz(batteryElements);
-            switchersAnalyz()
+            batteryAnalyz();
+            switchersAnalyz();
+            ledAnalyz();
+            rezistorAnalyz();
             onResult(connections, elements);
         });
 
         return () => cancelIdleCallback(id);
     }, [elements, connections]);
-    const batteryAnalyz = (batteryElements: Element[]) => {
+    const batteryAnalyz = () => {
         batteryElements.forEach(battery => {
             connections.forEach(conn => {
                 if (conn.start.ct === "start" && conn.start.id === battery.id && conn.start.io === "left") {
@@ -129,7 +132,7 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
                 removeLastConnection();
             }
 
-            console.log(connTypes);
+            // console.log(connTypes);
             leftConnections.forEach(leftConn => {
                 const leftNode = leftConn.start.id === switcher.id ? leftConn.end : leftConn.start;
 
@@ -138,7 +141,7 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
 
                     if (switcher.isOn) {
                         if ((leftNode.isActive && rightNode.isActive) && (leftNode.currentVoltage.type !== rightNode.currentVoltage.type)) {
-                            alert("Siz noto'g'ri ulanishni amalga oshirdingiz!!!");
+                            alert("❗Siz noto'g'ri ulanishni amalga oshirdingiz❗");
                             removeLastConnection();
                         } else if (leftNode.isActive && !rightNode.isActive) {
                             switchConnection(leftNode.currentVoltage, rightNode.pathId);
@@ -147,9 +150,9 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
                             switchConnection(rightNode.currentVoltage, leftNode.pathId);
                             switcher.out = "left";
                         }
-                    } else if(!switcher.isOn){
+                    } else if (!switcher.isOn) {
                         if ((leftNode.isActive && rightNode.isActive) && (leftNode.currentVoltage.type !== rightNode.currentVoltage.type)) {
-                            alert("Siz noto'g'ri ulanishni amalga oshirdingiz!!!");
+                            alert("❗Siz noto'g'ri ulanishni amalga oshirdingiz❗");
                             removeLastConnection();
                         } else if (leftNode.isActive && rightNode.isActive) {
                             switcher.out === "left" ? switchConnection({ id: leftNode.currentVoltage.id, voltage: 0, type: null }, leftNode.pathId) : switchConnection({ id: rightNode.currentVoltage.id, voltage: 0, type: null }, rightNode.pathId);
@@ -172,24 +175,140 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
             });
         }
 
-        function removeLastConnection() {
-            const lastConn = connections[connections.length - 1];
-            const newConn = connections.filter(item =>
-                item.start.pathId !== lastConn.start.pathId ||
-                item.end.pathId !== lastConn.end.pathId
-            );
-            connections = newConn;
-        }
+
     };
     const ledAnalyz = () => {
         const ledElements = elements.filter(el => el.type === "led");
+        if (ledElements.length === 0) return;
         const ledConnections = connections.filter(conn =>
             (conn.start.id === ledElements[0].id && conn.start.ct === "start") ||
             (conn.end.id === ledElements[0].id && conn.end.ct === "end")
         );
-        
+        ledElements.forEach(led => {
+            const ledLeftNode = ledConnections.filter(conn =>
+                (conn.start.id === led.id && conn.start.io === "left") ||
+                (conn.end.id === led.id && conn.end.io === "left")
+            );
+
+            const ledRightNode = ledConnections.filter(conn =>
+                (conn.start.id === led.id && conn.start.io === "right") ||
+                (conn.end.id === led.id && conn.end.io === "right")
+            );
+            const leftSet = new Set<string | null>();
+            const rightSet = new Set<string | null>();
+            const leftId = new Set<number | null>();
+            const rightId = new Set<number | null>();
+
+            ledLeftNode.map(left => {
+                if (left.start.id === led.id && left.start.io === "left") {
+                    left.start.currentVoltage.type !== null ? leftSet.add(left.start.currentVoltage.type) : null;
+                    leftId.add(left.start.currentVoltage.id)
+                } else if (left.end.id === led.id && left.end.io === "left") {
+                    left.end.currentVoltage.type !== null ? leftSet.add(left.end.currentVoltage.type) : null;
+                    leftId.add(left.end.currentVoltage.id)
+                }
+            })
+            ledRightNode.map(right => {
+                if (right.start.id === led.id && right.start.io === "right") {
+                    right.start.currentVoltage.type !== null ? rightSet.add(right.start.currentVoltage.type) : null;
+                    rightId.add(right.start.currentVoltage.id)
+                } else if (right.end.id === led.id && right.end.io === "right") {
+                    right.end.currentVoltage.type !== null ? rightSet.add(right.end.currentVoltage.type) : null;
+                    rightId.add(right.end.currentVoltage.id)
+                }
+            })
+
+            if (leftSet.size === 1 && rightSet.size === 1) {
+                if (leftSet.has("-") && rightSet.has("+")) {
+                    console.log(ledLeftNode, ledRightNode);
+
+                } else {
+                    led.isOn = false;
+                }
+
+            } else if (leftSet.size > 1 || rightSet.size > 1) {
+                alert("Siz noto'g'ri ulanishni amalga oshirdingiz!!!");
+                removeLastConnection();
+            } else {
+                led.isOn = false;
+            }
+
+        })
     }
 
+    const rezistorAnalyz = () => {
+        const rezistorElements = elements.filter(elem => elem.type === "rezistor");
+        rezistorElements.forEach(rezistor => {
+            const rezistorLeftConnection = connections.filter(conn =>
+                (conn.start.ct === "start" && conn.start.io === "left" && conn.start.id === rezistor.id) ||
+                (conn.end.ct === "end" && conn.end.io === "left" && conn.end.id === rezistor.id));
+            const rezistorRightConnection = connections.filter(conn =>
+                (conn.start.ct === "start" && conn.start.io === "right" && conn.start.id === rezistor.id) ||
+                (conn.end.ct === "end" && conn.end.io === "right" && conn.end.id === rezistor.id));
+            // console.log(rezistorLeftConnection, rezistorRightConnection);
+            if (rezistorLeftConnection.length === 1 && rezistorRightConnection.length === 1) {
+                const leftConn = rezistorLeftConnection[0].start.id === rezistor.id ? rezistorLeftConnection[0].start : rezistorLeftConnection[0].end;
+                const rightConn = rezistorRightConnection[0].start.id === rezistor.id ? rezistorRightConnection[0].start : rezistorRightConnection[0].end;
+                let rezistance = 0;
+                if (leftConn.isActive && !rightConn.isActive) {
+                    rezistance = (leftConn.rezistans + rezistor.resistance);
+                    rightConn.rezistans = rezistance;
+                    rightConn.isActive = true;
+                    rightConn.currentVoltage = leftConn.currentVoltage;
+                } else if (!leftConn.isActive && rightConn.isActive) {
+                    rezistance = (rightConn.rezistans + rezistor.resistance);
+                    leftConn.rezistans = rezistance;
+                    leftConn.isActive = true;
+                    leftConn.currentVoltage = rightConn.currentVoltage
+                }
+            } else if (rezistorLeftConnection.length > 1 || rezistorRightConnection.length > 1) {
+                alert("❗Kechirasiz noto'g'ri ulanishni amalga oshirdingiz❗. ⚠ Rezistordan faqat bitta sim yunalishida qullashingiz mumkin ⚠")
+                removeLastConnection()
+            }
+
+        })
+
+    }
+    useEffect(() => {
+        connections.forEach(conn => {
+            if (conn.start.isActive && conn.start.ct === "start") {
+                connections.forEach(item => {
+                    if (item.start.pathId === conn.start.pathId) {
+                        item.start.rezistans = conn.start.rezistans;
+                        item.start.isActive = true;
+                        item.start.currentVoltage = conn.start.currentVoltage;
+                    }
+                    if (item.end.pathId === conn.start.pathId) {
+                        item.end.rezistans = conn.start.rezistans;
+                        item.end.isActive = true;
+                        item.end.currentVoltage = conn.start.currentVoltage;
+                    }
+                })
+            } else if (conn.end.isActive && conn.end.ct === "end") {
+                connections.forEach(item => {
+                    if (item.start.pathId === conn.end.pathId) {
+                        item.start.rezistans = conn.end.rezistans;
+                        item.start.isActive = true;
+                        item.start.currentVoltage = conn.end.currentVoltage;
+                    }
+                    if (item.end.pathId === conn.end.pathId) {
+                        item.end.rezistans = conn.end.rezistans;
+                        item.end.isActive = true;
+                        item.end.currentVoltage = conn.end.currentVoltage;
+                    }
+                })
+            }
+        })
+    }, [connections])
+
+    function removeLastConnection() {
+        const lastConn = connections[connections.length - 1];
+        const newConn = connections.filter(item =>
+            item.start.pathId !== lastConn.start.pathId ||
+            item.end.pathId !== lastConn.end.pathId
+        );
+        connections = newConn;
+    }
 
     return (
         <></>

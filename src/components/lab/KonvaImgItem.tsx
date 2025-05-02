@@ -35,7 +35,7 @@ const KonvaImgItem: React.FC<KonvaImgItemProps> = ({
   draggable,
   style = {},
 }) => {
-  const [image] = useImage(type === "switcher" && isOn ? "/src/assets/circuit-switch-on.png" : src);
+  const [image] = useImage(type === "switcher" && isOn ? "/src/assets/circuit-switch-on.png" : type === "led" && isOn ? "/src/assets/circuit-led-on.png" : src);
 
   return image ? (
     <Image

@@ -6,7 +6,6 @@ import SnapObj from "./SnapObj";
 import Konva from "konva";
 import AnalyzEngine from "./AnalyzEngine";
 import AktionBar from "./AktionBar";
-import LedAnalyz from "./LedAnalyz";
 
 interface Point {
   x: number;
@@ -15,9 +14,11 @@ interface Point {
   pathId: number;
   io: string;
   isActive: boolean;
-  currentVoltage: {id:number | null, voltage: number, type: "+" | "-" | null };
+  currentVoltage: { id: number | null, voltage: number, type: "+" | "-" | null };
   ct: "start" | "end" | "point";
+  rezistans: number;
 }
+
 
 interface Connection {
   start: Point;
@@ -30,7 +31,7 @@ interface Element {
   x: number,
   y: number,
   src: string,
-  resistance?: number,
+  resistance: number,
   voltage?: number,
   brightness?: number,
   isBurned?: boolean,
@@ -132,7 +133,8 @@ const Canvas: React.FC = () => {
         io: tr,
         ct: ct,
         isActive: false,
-        currentVoltage: {id:null, voltage: 0, type: null }
+        currentVoltage: { id: null, voltage: 0, type: null },
+        rezistans: drawingLine.start.rezistans
       });
       setDrawingLine(null);
     }
@@ -225,7 +227,8 @@ const Canvas: React.FC = () => {
                 io: drawingLine.start.io,
                 ct: "point",
                 isActive: false,
-                currentVoltage: {id: null, voltage: 0, type: null }
+                currentVoltage: { id: null, voltage: 0, type: null },
+                rezistans:drawingLine.start.rezistans
               };
               lineCreation(drawingLine.start, position);
               setDrawingLine({
@@ -238,7 +241,8 @@ const Canvas: React.FC = () => {
                   io: drawingLine.start.io,
                   ct: "point",
                   isActive: false,
-                  currentVoltage: drawingLine.start.currentVoltage
+                  currentVoltage: drawingLine.start.currentVoltage,
+                  rezistans: drawingLine.start.rezistans
                 },
               });
             } else {
@@ -368,7 +372,8 @@ const Canvas: React.FC = () => {
                       io: "left",
                       ct: "start",
                       isActive: false,
-                      currentVoltage: {id: null, voltage: 0, type: null }
+                      currentVoltage: { id: null, voltage: 0, type: null },
+                      rezistans: el.resistance
                     };
                     mouseDown(start);
                   } else if (drawingLine) {
@@ -381,7 +386,8 @@ const Canvas: React.FC = () => {
                       io: "left",
                       ct: "end",
                       isActive: false,
-                      currentVoltage: {id:null, voltage: 0, type: null }
+                      currentVoltage: { id: null, voltage: 0, type: null },
+                      rezistans: drawingLine.start.rezistans
                     });
                     setDrawingLine(null);
                   }
@@ -425,7 +431,8 @@ const Canvas: React.FC = () => {
                       io: "right",
                       ct: "start",
                       isActive: false,
-                      currentVoltage: {id: null, voltage: 0, type: null },
+                      currentVoltage: { id: null, voltage: 0, type: null },
+                      rezistans: el.resistance
                     };
                     mouseDown(start);
                   } else if (drawingLine) {
@@ -438,7 +445,8 @@ const Canvas: React.FC = () => {
                       io: "right",
                       ct: "end",
                       isActive: false,
-                      currentVoltage: {id: null, voltage: 0, type: null }
+                      currentVoltage: { id: null, voltage: 0, type: null },
+                      rezistans: drawingLine.start.rezistans
                     });
                     setDrawingLine(null);
                   }
@@ -456,6 +464,7 @@ const Canvas: React.FC = () => {
           {drawingSnapY !== null && <SnapObj l={drawingSnapY} ct="Y" />}
         </Layer>
         <AnalyzEngine elements={elements} connections={connections} onResult={handleLogicResult} />
+
       </Stage>
       {
         elements.map((e, i) => (
