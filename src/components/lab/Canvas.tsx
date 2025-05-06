@@ -134,7 +134,7 @@ const Canvas: React.FC = () => {
         ct: ct,
         isActive: false,
         currentVoltage: { id: null, voltage: 0, type: null },
-        rezistans: drawingLine.start.rezistans
+        rezistans: 0
       });
       setDrawingLine(null);
     }
@@ -192,7 +192,10 @@ const Canvas: React.FC = () => {
       })
     } else if (change.method === "PUT") {
       setElements(prev => prev.map(el => {
-        if (el.id === change.id) {
+        if (el.id === change.id && (el.type === "rezistor" || el.type === "potentiometer")) {
+          return { ...el, resistance: Number(change.isOn) }
+
+        } else if (el.id === change.id) {
           return { ...el, isOn: change.isOn }
         }
         return el
@@ -228,7 +231,7 @@ const Canvas: React.FC = () => {
                 ct: "point",
                 isActive: false,
                 currentVoltage: { id: null, voltage: 0, type: null },
-                rezistans:drawingLine.start.rezistans
+                rezistans: 0
               };
               lineCreation(drawingLine.start, position);
               setDrawingLine({
@@ -242,7 +245,7 @@ const Canvas: React.FC = () => {
                   ct: "point",
                   isActive: false,
                   currentVoltage: drawingLine.start.currentVoltage,
-                  rezistans: drawingLine.start.rezistans
+                  rezistans: 0
                 },
               });
             } else {
@@ -336,7 +339,7 @@ const Canvas: React.FC = () => {
                 y={0}
                 width={100}
                 height={80}
-                style={{ shadowBlur: 2, shadowColor: el.id === markObj ? "white" : "#5050506e" }}
+                style={{ shadowBlur: 2, brightness: el.brightness, isBurned: el.isBurned, shadowColor: el.id === markObj ? "white" : "#5050506e" }}
               />
               <Circle
                 x={0}
@@ -373,7 +376,7 @@ const Canvas: React.FC = () => {
                       ct: "start",
                       isActive: false,
                       currentVoltage: { id: null, voltage: 0, type: null },
-                      rezistans: el.resistance
+                      rezistans: 0
                     };
                     mouseDown(start);
                   } else if (drawingLine) {
@@ -387,7 +390,7 @@ const Canvas: React.FC = () => {
                       ct: "end",
                       isActive: false,
                       currentVoltage: { id: null, voltage: 0, type: null },
-                      rezistans: drawingLine.start.rezistans
+                      rezistans: 0
                     });
                     setDrawingLine(null);
                   }
@@ -432,7 +435,7 @@ const Canvas: React.FC = () => {
                       ct: "start",
                       isActive: false,
                       currentVoltage: { id: null, voltage: 0, type: null },
-                      rezistans: el.resistance
+                      rezistans: 0
                     };
                     mouseDown(start);
                   } else if (drawingLine) {
@@ -446,7 +449,7 @@ const Canvas: React.FC = () => {
                       ct: "end",
                       isActive: false,
                       currentVoltage: { id: null, voltage: 0, type: null },
-                      rezistans: drawingLine.start.rezistans
+                      rezistans: 0
                     });
                     setDrawingLine(null);
                   }

@@ -4,8 +4,6 @@ import battery from "../../assets/circuit-battery.png";
 import led from "../../assets/circuit-led-of.png";
 import switcher from "../../assets/circuit-switch-of.png";
 import rezistor from "../../assets/circuit-rezistor.png"
-import capacitor from "../../assets/circuit-capacitor.png"
-import diod from "../../assets/circuit-diod.png"
 import potentiometer from "../../assets/circuit-potentiometer.png"
 import voltmetr from "../../assets/circuit-voltmeter.png"
 import ammetr from "../../assets/circuit-ammeter.png"
@@ -42,7 +40,7 @@ const elements = [
         title: "Kalit",
         isOn: false,        // Boshlang‘ichda o‘chirilgan
         currentVoltage: { voltage: 0, type: null },
-        resistance: 0,
+        resistance: 0.1,
         out: undefined
     },
     {
@@ -55,23 +53,13 @@ const elements = [
         resistance: 220
     },
     {
-        id: "drag6",
-        type: "diod",
-        src: diod,
-        title: "Diod",
-        voltageDrop: 0.7,   // Oddiy silikon diod uchun
-        resistance: 0,
-        isOn: false,
-        current: 0
-    },
-    {
         id: "drag7",
         type: "potentiometer",
         src: potentiometer,
         title: "Potensiometr",
-        isOn: 10000,   // O‘zgartiriladigan qiymat (max)
+        isOn: true,   // O‘zgartiriladigan qiymat (max)
         current: 0,
-        resistance: 0,
+        resistance: 10,
     },
     {
         id: "drag8",
@@ -79,15 +67,17 @@ const elements = [
         src: voltmetr,
         title: "Voltmetr",
         resistance: Infinity,  // Voltmetr tok o‘tkazmasligi kerak
-        voltage: 0
+        voltage: 0,
+        isOn: 0
     },
     {
         id: "drag9",
         type: "ammetr",
         src: ammetr,
         title: "Ampermetr",
-        resistance: 0,         // Ampermetr zanjirga ulanadi, qarshiligi 0 bo‘ladi
-        current: 0
+        resistance: 0.1,         // Ampermetr zanjirga ulanadi, qarshiligi 0 bo‘ladi
+        current: 0,
+        isOn: 0
     }
 ];
 

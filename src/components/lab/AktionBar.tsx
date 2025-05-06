@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { BsTrash3 } from "react-icons/bs";
 import { FaCheck } from "react-icons/fa";
 import { FaXmark } from "react-icons/fa6";
@@ -28,13 +28,12 @@ const marks = [
     }
 ];
 
-const AktionBar: React.FC<aktion> = ({ type, id, isOn, objChange }) => {
-    const batteryVoltages = [1.5, 3, 4.5, 6, 9, 12];
+const AktionBar: FC<aktion> = ({ type, id, isOn, objChange }) => {
+    const batteryVoltages = [1.5, 2, 3, 4.5, 6, 9, 12];
     const resistorValues = [10, 22, 47, 100, 220, 330, 470, 680, 1000];
 
     const [voltage, setVoltage] = useState(9);
     const [resistance, setResistance] = useState(220);
-    const [capacitance, setCapacitance] = useState({ value: 1, unit: 'μF' });
     const [resistanceP, setResistanceP] = useState(10);
 
     const handleVoltageChange = (value: number) => {
@@ -49,22 +48,22 @@ const AktionBar: React.FC<aktion> = ({ type, id, isOn, objChange }) => {
 
     const handleResistancePChange = (e: Event, newValue: number) => {
         e.preventDefault()
-        setResistanceP(newValue as number); 
+        setResistanceP(newValue as number);
         objChange({ method: "PUT", id, isOn: newValue });
     };
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-          if (e.key === 'Delete') {
-            objChange({method:"DELETE", id, isOn: true})
-          }
+            if (e.key === 'Delete') {
+                objChange({ method: "DELETE", id, isOn: true })
+            }
         };
-    
+
         window.addEventListener('keydown', handleKeyDown);
         return () => {
-          window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keydown', handleKeyDown);
         };
-      }, []);
+    }, []);
     return (
         <div className='w-auto h-[100px] absolute flex justify-between items-center gap-2 top-[10px] right-[10px] z-10'>
             {
@@ -102,27 +101,27 @@ const AktionBar: React.FC<aktion> = ({ type, id, isOn, objChange }) => {
                                 </div>
                             </div>
                             : type === "potentiometer" ?
-                                    <div
-                                        className="border-hover w-[400px] p-5 h-[80px] flex justify-items-center bg-gray-800 rounded-xl"
-                                    >
-                                        <Box sx={{ width: 350, left: 20 }}>
-                                            <Slider
-                                                aria-label="Custom marks"
-                                                value={resistanceP}
-                                                onChange={handleResistancePChange}
-                                                valueLabelDisplay="auto"
-                                                step={10}
-                                                min={0}
-                                                max={1000}
-                                                marks={marks}
-                                            />
-                                        </Box>
+                                <div
+                                    className="border-hover w-[400px] p-5 h-[80px] flex justify-items-center bg-gray-800 rounded-xl"
+                                >
+                                    <Box sx={{ width: 350, left: 20 }}>
+                                        <Slider
+                                            aria-label="Custom marks"
+                                            value={resistanceP}
+                                            onChange={handleResistancePChange}
+                                            valueLabelDisplay="auto"
+                                            step={1}
+                                            min={0}
+                                            max={2000}
+                                            marks={marks}
+                                        />
+                                    </Box>
 
-                                    </div> : null
+                                </div> : null
             }
-            <div 
-            onClick={() => {objChange({method:"DELETE", id, isOn: true})}}
-            className="border-hover w-[80px] h-[80px] grid gap-3 cursor-pointer justify-center items-center p-3 text-red-600 bg-gray-800 rounded-xl text-center">
+            <div
+                onClick={() => { objChange({ method: "DELETE", id, isOn: true }) }}
+                className="border-hover w-[80px] h-[80px] grid gap-3 cursor-pointer justify-center items-center p-3 text-red-600 bg-gray-800 rounded-xl text-center">
                 <BsTrash3 className='w-full text-2xl' />
                 <p>O'chirish</p>
             </div>
