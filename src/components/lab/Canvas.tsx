@@ -12,7 +12,7 @@ interface Point {
   y: number;
   id: number;
   pathId: number;
-  io: string;
+  io: 'left' | 'right';
   isActive: boolean;
   currentVoltage: { id: number | null, voltage: number, type: "+" | "-" | null };
   ct: "start" | "end" | "point";
@@ -177,7 +177,24 @@ const Canvas: React.FC = () => {
     setConnections([...conn]);
     setElements([...elem]);
   }
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete') {
+        
+        if(!markObj) return;
+        handleObjChange({ method: "DELETE", id: markObj, isOn: true })
+      }
+      if(e.key === 'Escape' && drawingLine) {
+        handleObjChange({ method: "DELETE", id: drawingLine.start.pathId, isOn: true })
+        setDrawingLine(null);
+      }
+    };
 
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [markObj, drawingLine]);
   const handleObjChange = (change: Post) => {
     if (change.method === "DELETE") {
       setElements(prev => prev.filter(el => el.id !== change.id));
@@ -283,6 +300,7 @@ const Canvas: React.FC = () => {
               onClick={(e) => {
                 e.cancelBubble = true;
                 setMarkObj(conn.start.pathId)
+                
               }}
               onMouseEnter={(e) => {
                 e.cancelBubble = true;
@@ -314,16 +332,16 @@ const Canvas: React.FC = () => {
                         ...line,
                         start:
                           line.start.io === "left"
-                            ? { ...line.start, x: newX, y: newY + 40 }
-                            : { ...line.start, x: newX + 100, y: newY + 40 },
+                            ? { ...line.start, x: newX, y: newY + 50 }
+                            : { ...line.start, x: newX + 100, y: newY + 50 },
                       };
                     } else if (line.end.id === el.id && line.end.ct === "end") {
                       return {
                         ...line,
                         end:
                           line.end.io === "left"
-                            ? { ...line.end, x: newX, y: newY + 40 }
-                            : { ...line.end, x: newX + 100, y: newY + 40 },
+                            ? { ...line.end, x: newX, y: newY + 50 }
+                            : { ...line.end, x: newX + 100, y: newY + 50 },
                       };
                     }
                     return line;
@@ -338,12 +356,12 @@ const Canvas: React.FC = () => {
                 x={0}
                 y={0}
                 width={100}
-                height={80}
-                style={{ shadowBlur: 2, brightness: el.brightness, isBurned: el.isBurned, shadowColor: el.id === markObj ? "white" : "#5050506e" }}
+                height={100}
+                style={{ shadowBlur: 2, brightness: el.brightness, isBurned: el.isBurned, shadowColor: el.id === markObj ? "white" : "#5050506e", shadowOpacity: 1 }}
               />
               <Circle
                 x={0}
-                y={40}
+                y={50}
                 radius={5}
                 fill={isHoveredL === i ? "red" : "#3c4a55"}
                 stroke="black"
@@ -369,7 +387,7 @@ const Canvas: React.FC = () => {
                     const currentPos = { x: group.x(), y: group.y() };
                     const start: Point = {
                       x: currentPos.x,
-                      y: currentPos.y + 40,
+                      y: currentPos.y + 50,
                       id: el.id,
                       pathId: Date.now(),
                       io: "left",
@@ -402,7 +420,7 @@ const Canvas: React.FC = () => {
               />
               <Circle
                 x={100}
-                y={40}
+                y={50}
                 radius={5}
                 fill={isHoveredR === i ? "red" : "#3c4a55"}
                 stroke="black"
@@ -428,7 +446,7 @@ const Canvas: React.FC = () => {
                     const currentPos = { x: group.x(), y: group.y() };
                     const start: Point = {
                       x: currentPos.x + 100,
-                      y: currentPos.y + 40,
+                      y: currentPos.y + 50,
                       id: el.id,
                       pathId: Date.now(),
                       io: "right",
@@ -469,16 +487,8 @@ const Canvas: React.FC = () => {
         <AnalyzEngine elements={elements} connections={connections} onResult={handleLogicResult} />
 
       </Stage>
-      {
-        elements.map((e, i) => (
-          e.id === markObj ? <AktionBar key={i} type={e.type} id={e.id} isOn={e.isOn} objChange={handleObjChange} /> : null
-        ))
-      }
-      {
-        connections.map((e, i) => (
-          e.start.pathId === markObj ? <AktionBar key={i} type={"Line"} id={e.start.pathId} isOn={true} objChange={handleObjChange} /> : null
-        ))
-      }
+          
+      <AktionBar element={elements} resElem={elements}/>
     </div>
   );
 };

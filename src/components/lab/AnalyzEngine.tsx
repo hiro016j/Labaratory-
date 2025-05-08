@@ -5,7 +5,7 @@ interface Point {
     y: number;
     id: number;
     pathId: number;
-    io: string;
+    io: 'left' | 'right';
     isActive: boolean;
     currentVoltage: { id: number | null, voltage: number, type: "+" | "-" | null };
     ct: "start" | "end" | "point";
@@ -59,7 +59,7 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
         });
 
         return () => cancelIdleCallback(id);
-    }, [elements, connections]);
+    }, [elements, connections, batteryElements]);
     useEffect(() => {
         rezistorAnalyz();
         ledAnalyz();
@@ -114,163 +114,138 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
             })
         })
     };
-    const switchersAnalyz = () => {
-        const switcherElements = elements.filter(el => el.type === "switcher");
 
-        switcherElements.forEach(switcher => {
-            const getConnections = (io: string) =>
-                connections.filter(conn =>
-                    (conn.start.id === switcher.id && conn.start.io === io) ||
-                    (conn.end.id === switcher.id && conn.end.io === io)
-                );
+    function switchersAnalyz() {
+        const switchers = elements.filter(el => el.type === 'switcher');
 
-            const leftConnections = getConnections("left");
-            const rightConnections = getConnections("right");
-
-            const connTypes = [...leftConnections, ...rightConnections].map(conn => {
-                const otherNode = conn.start.id === switcher.id ? conn.end : conn.start;
-                return otherNode.currentVoltage.type;
-            }).filter(Boolean);
-
-            const uniqueTypes = [...new Set(connTypes)];
-
-            if (uniqueTypes.length > 1) {
-                alert("Siz noto'g'ri ulanishni amalga oshirdingiz!!!");
-                removeLastConnection();
-            }
-            // console.log(connTypes);
-            leftConnections.forEach(leftConn => {
-                const leftNode = leftConn.start.id === switcher.id ? leftConn.end : leftConn.start;
-
-                rightConnections.forEach(rightConn => {
-                    const rightNode = rightConn.start.id === switcher.id ? rightConn.end : rightConn.start;
-
-                    if (switcher.isOn) {
-                        if (!leftNode || !rightNode) {
-                            switcher.isOn = false;
+        switchers.forEach(sw => {
+            // Olingan tok ma'lumotini uzatish uchun yordamchi:
+            const propagateVoltage = (act: ActivePoint) => {
+                connections.forEach(conn => {
+                    [conn.start, conn.end].forEach(pt => {
+                        if (pt.pathId === act.pathId) {
+                            pt.currentVoltage = { ...act.currentVoltage };
+                            pt.isActive = act.currentVoltage.type !== null;
                         }
-                        if ((leftNode.isActive && rightNode.isActive) && (leftNode.currentVoltage.type !== rightNode.currentVoltage.type)) {
-                            alert("❗Siz noto'g'ri ulanishni amalga oshirdingiz❗");
-                            removeLastConnection();
-                        } else if (leftNode.isActive && !rightNode.isActive) {
-                            switchConnection(leftNode.currentVoltage, rightNode.pathId);
-                            switcher.out = "right";
-                        } else if (!leftNode.isActive && rightNode.isActive) {
-                            switchConnection(rightNode.currentVoltage, leftNode.pathId);
-                            switcher.out = "left";
-                        }
-                    } else if (!switcher.isOn) {
-                        if ((leftNode.isActive && rightNode.isActive) && (leftNode.currentVoltage.type !== rightNode.currentVoltage.type)) {
-                            alert("❗Siz noto'g'ri ulanishni amalga oshirdingiz❗");
-                            removeLastConnection();
-                        } else if (leftNode.isActive && rightNode.isActive) {
-                            switcher.out === "left" ? switchConnection({ id: leftNode.currentVoltage.id, voltage: 0, type: null }, leftNode.pathId) : switchConnection({ id: rightNode.currentVoltage.id, voltage: 0, type: null }, rightNode.pathId);
-                        }
-                    }
+                    });
                 });
-            });
+            };
+
+            // Switcher'ga ulangan chap va o'ng tarmoqlar
+            const leftConns = connections.filter(conn =>
+                (conn.start.id === sw.id && conn.start.io === 'left') ||
+                (conn.end.id === sw.id && conn.end.io === 'left')
+            );
+            const rightConns = connections.filter(conn =>
+                (conn.start.id === sw.id && conn.start.io === 'right') ||
+                (conn.end.id === sw.id && conn.end.io === 'right')
+            );
+
+            // Chap tomondan faollashtirilgan nuqta (point)
+            const leftActive = leftConns
+                .map(conn => conn.start.id === sw.id ? conn.end : conn.start)
+                .find(pt => pt.isActive);
+
+            // O'ng tomondan faollashtirilgan nuqta
+            const rightActive = rightConns
+                .map(conn => conn.start.id === sw.id ? conn.end : conn.start)
+                .find(pt => pt.isActive);
+
+            // Switch YOQILGAN holatda
+            if (sw.isOn) {
+                if (leftActive) {
+                    // Chap → O'ng
+                    rightConns.forEach(conn => {
+                        const target = conn.start.id === sw.id ? conn.end : conn.start;
+                        propagateVoltage({ currentVoltage: leftActive.currentVoltage, pathId: target.pathId });
+                    });
+                    sw.out = 'right';
+                } else if (rightActive) {
+                    // O'ng → Chap
+                    leftConns.forEach(conn => {
+                        const target = conn.start.id === sw.id ? conn.end : conn.start;
+                        propagateVoltage({ currentVoltage: rightActive.currentVoltage, pathId: target.pathId });
+                    });
+                    sw.out = 'left';
+                } else {
+                    // Ikkala tomonda ham hech kim faollashmagan => switch o'chirilgan kabi
+                    sw.isOn = false;
+                }
+
+                // Switch O‘CHIRILGAN holatda: ajratilgan simni 0V ga tushiramiz
+            } else {
+                if (leftActive && rightActive) {
+                    // oldingi yo‘lakka qarab nol voltaj yuboramiz
+                    const killPath = (pathId: number) => propagateVoltage({
+                        currentVoltage: { id: null, voltage: 0, type: null }, pathId: pathId
+                    });
+                    sw.out === 'left'
+                        ? killPath(leftActive.pathId)
+                        : killPath(rightActive.pathId);
+                }
+            }
         });
+    }
 
-        function switchConnection(voltage: { id: number | null, voltage: number, type: "+" | "-" | null }, pathId: number) {
-            connections.forEach(conn => {
-                if (conn.start.pathId === pathId) {
-                    conn.start.currentVoltage = voltage;
-                    conn.start.isActive = voltage.type !== null;
-                    conn.start.currentVoltage.type = voltage.type;
-                }
-                if (conn.end.pathId === pathId) {
-                    conn.end.currentVoltage = voltage;
-                    conn.end.isActive = voltage.type !== null;
-                    conn.end.currentVoltage.type = voltage.type;
-                }
-            });
-        }
-
-
-    };
-    const ledAnalyz = () => {
+    // Improved ledAnalyz function with fixes and optimizations
+    function ledAnalyz() {
+        // Find all LED elements
         const ledElements = elements.filter(el => el.type === "led");
-        if (ledElements.length === 0) return;
-        const ledConnections = connections.filter(conn =>
-            (conn.start.id === ledElements[0].id && conn.start.ct === "start") ||
-            (conn.end.id === ledElements[0].id && conn.end.ct === "end")
-        );
+        if (!ledElements.length) return;
+
         ledElements.forEach((led) => {
-            const ledLeftConn = ledConnections.filter(conn =>
+            // Get connections for this specific LED
+            const relatedConns = connections.filter(conn =>
+                conn.start.id === led.id || conn.end.id === led.id
+            );
+            if (!relatedConns.length) return;
+
+            // Split into left and right side connections
+            const leftConns = relatedConns.filter(conn =>
                 (conn.start.id === led.id && conn.start.io === "left") ||
                 (conn.end.id === led.id && conn.end.io === "left")
             );
-
-            const ledRightConn = ledConnections.filter(conn =>
+            const rightConns = relatedConns.filter(conn =>
                 (conn.start.id === led.id && conn.start.io === "right") ||
                 (conn.end.id === led.id && conn.end.io === "right")
             );
-            const leftSet = new Set<string | null>();
-            const rightSet = new Set<string | null>();
-            const leftId = new Set<number | null>();
-            const rightId = new Set<number | null>();
 
-            ledLeftConn.map(left => {
-                if (left.start.id === led.id && left.start.io === "left") {
-                    left.start.currentVoltage.type !== null ? leftSet.add(left.start.currentVoltage.type) : null;
-                    leftId.add(left.start.currentVoltage.id)
-                } else if (left.end.id === led.id && left.end.io === "left") {
-                    left.end.currentVoltage.type !== null ? leftSet.add(left.end.currentVoltage.type) : null;
-                    leftId.add(left.end.currentVoltage.id)
-                }
-            })
-            ledRightConn.map(right => {
-                if (right.start.id === led.id && right.start.io === "right") {
-                    right.start.currentVoltage.type !== null ? rightSet.add(right.start.currentVoltage.type) : null;
-                    rightId.add(right.start.currentVoltage.id)
-                } else if (right.end.id === led.id && right.end.io === "right") {
-                    right.end.currentVoltage.type !== null ? rightSet.add(right.end.currentVoltage.type) : null;
-                    rightId.add(right.end.currentVoltage.id)
-                }
-            })
-
-            const ledLeftNode = ledLeftConn.find(left => left.start.id === led.id || left.end.id === led.id);
-            const ledRightNode = ledRightConn.find(right => right.start.id === led.id || right.end.id === led.id);
-
-            if (leftSet.size === 1 && rightSet.size === 1) {
-                if (leftSet.has("-") && rightSet.has("+")) {
-                    if (ledLeftNode?.start.currentVoltage.id !== ledRightNode?.start.currentVoltage.id) return;
-                    const voltage = Number(ledLeftNode?.start.currentVoltage.voltage);
-                    // console.log(ledLeftNode, ledRightNode);
-                    let allRezistance = 0.1;
-                    allRezistance += Number(ledLeftNode?.start.rezistans);
-                    allRezistance += Number(ledRightNode?.start.rezistans);
-                    const brightness = voltage / allRezistance;
-                    const brightnessRound = Math.round(brightness*1000)
-                    ;
-                    if (brightnessRound > 30 && voltage > 3) {
-                        console.log(led.isBurned);
-                        led.isBurned = true;
-                        led.isOn = false;
-                        led.brightness = 0;
-                    } else if ((brightnessRound <= 30 && brightnessRound >= 5) || (voltage < 2.2 && voltage > 1.2)) {
-                        led.isBurned = false;
-                        led.isOn = true;
-                        led.brightness = brightnessRound;
-                        console.log(brightnessRound);
-                    } else {
-                        led.isBurned = false;
-                        led.isOn = false;
-                        led.brightness = 0;
-                        console.log(brightnessRound);
-                    }
-                } else {
-                    led.isOn = false;
-                }
-
-            } else if (leftSet.size > 1 || rightSet.size > 1) {
-                alert("Siz noto'g'ri ulanishni amalga oshirdingiz!!!");
-                removeLastConnection();
-            } else {
+            // Determine active nodes
+            const leftNode = leftConns.find(conn => (conn.start.id === led.id ? conn.end : conn.start).isActive);
+            const rightNode = rightConns.find(conn => (conn.start.id === led.id ? conn.end : conn.start).isActive);
+            if (!leftNode || !rightNode) {
+                // No active path: LED is off
+                led.brightness = 0;
                 led.isOn = false;
+                return;
             }
 
-        })
+            // Extract voltage and resistances
+            const voltage = Number((leftNode.start?.currentVoltage || leftNode.end?.currentVoltage).voltage);
+            const rLeft = Number(leftNode.start?.rezistans || leftNode.end?.rezistans);
+            const rRight = Number(rightNode.start?.rezistans || rightNode.end?.rezistans);
+            const rLed = Number(led.resistance);
+
+            // Total resistance in series
+            const rTotal = rLeft + rLed + rRight;
+            const current = voltage / rTotal;
+
+            // LED voltage drop and brightness
+            const vLed = Math.round((current * rLed) * 100) / 100;
+            led.brightness = Math.round((current / 0.1) * 1000) / 500; // or other formula
+            led.isOn = true;
+
+            // Update other nodes' voltages
+            [...leftConns, ...rightConns].forEach(conn => {
+                // Determine the node not attached to LED
+                const node = (conn.start.id === led.id) ? conn.end : conn.start;
+                node.currentVoltage = { ...node.currentVoltage, voltage: vLed };
+                console.log(node.currentVoltage.type);
+
+                node.isActive = true;
+                node.rezistans = node.rezistans; // unchanged
+            });
+        });
     }
 
     const rezistorAnalyz = () => {
@@ -354,6 +329,7 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
 
     }
 
+    // Improved voltmetrAnalyz function with fixes and optimizations
     const voltmetrAnalyz = () => {
         const voltmetrElem = elements.filter(elem => elem.type === "voltmetr");
         voltmetrElem.forEach(voltmetr => {
@@ -373,7 +349,10 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
             if (voltmetrLeftPath.size > 1 || voltmetrRightPath.size > 1) removeLastConnection();
             console.log(voltmetrLeftConn, voltmetrRightConn);
 
-            if (voltmetrLeftConn.length < 1 || voltmetrRightConn.length < 1) return;
+            if (voltmetrLeftConn.length < 1 || voltmetrRightConn.length < 1) {
+                voltmetr.isOn = 0;
+                return;
+            }
             if (voltmetrLeftConn[0].start.currentVoltage.type === "-" && voltmetrRightConn[0].start.currentVoltage.type === "+") {
                 if (voltmetrLeftConn[0].start.currentVoltage.id === voltmetrRightConn[0].start.currentVoltage.id) {
                     voltmetr.isOn = Math.max(voltmetrLeftConn[0].start.currentVoltage.voltage, voltmetrRightConn[0].start.currentVoltage.voltage);
@@ -385,6 +364,7 @@ const AnalyzEngine: React.FC<AnalyzProp> = ({ elements, connections, onResult })
             }
         })
     }
+
     const ammetrAnalyz = () => {
         const ammetrElements = elements.filter(el => el.type === "ammetr");
         ammetrElements.forEach(ammetr => {
