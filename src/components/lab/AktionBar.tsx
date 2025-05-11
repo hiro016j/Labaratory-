@@ -17,12 +17,18 @@ interface Element {
     out?: string | undefined
 };
 
+interface Post {
+    method: "PUT" | "DELETE";
+    id: number;
+    isOn: boolean | number;
+}
 interface Acyion {
     element: Element[],
-    resElem: (res: Element) => void,
+    resElem: (res: Post) => void,
+    hoverChange: (hover: number) => void
 }
 
-const AktionBar: FC<Acyion> = ({ element, resElem }) => {
+const AktionBar: FC<Acyion> = ({ element, resElem, hoverChange }) => {
     return (
         <div className="grid gap-2 justify-center w-[400px] h-[500px] overflow-y-auto overflow-x-hidden absolute top-2 right-2 rounded-lg z-50">
             {
@@ -30,14 +36,23 @@ const AktionBar: FC<Acyion> = ({ element, resElem }) => {
                     <div className="w-[400px] h-auto grid gap-2 p-2 justify-center absolute bg-gray-100 shadow-lg rounded-lg">
                         {
                             element.map((el) => (
-                                <div key={el.id} className="w-[380px] h-10 flex justify-between items-center relative bg-gray-200 p-2 rounded-lg shadow-md">
+                                <div key={el.id} className="w-[380px] h-10 flex justify-between items-center relative bg-gray-200 p-2 rounded-lg shadow-md cursor-pointer hover:shadow-gray-500 transition" onClick={() => { hoverChange(el.id) }}>
                                     <div className="flex justify-start gap-1.5 items-center">
                                         <img src={el.src} alt="" className="w-10 h-10 rounded-4xl" />
                                         <h1 className="text-gray-700">{el.type}</h1>
                                     </div>
                                     <div className="w-[140px] right-[70px] absolute flex justify-start gap-4 items-center">
                                         <h1 className="text-gray-700"><b>V:</b> {el.isOn}</h1>
-                                        <h1 className="text-gray-700"><b>R:</b> {el.resistance}</h1>
+                                        <h1 className="text-gray-700"><b>R:</b>
+                                            <select name="rezistance" id="rezistance">
+                                                <option value="12">12</option>
+                                                <option value="12">13</option>
+                                                <option value="12">14</option>
+                                                <option value="12">15</option>
+                                                <option value="12">13</option>
+
+                                            </select>
+                                        </h1>
                                     </div>
                                     <div className="w-[70px] flex justify-end gap-1.5 items-center">
                                         {el.type === "switcher" ? <button className="bg-green-500 text-white px-2 py-1 rounded-lg cursor-pointer hover:bg-green-600 transition duration-200">
@@ -45,7 +60,7 @@ const AktionBar: FC<Acyion> = ({ element, resElem }) => {
                                         </button> : null}
                                         <button
                                             className="bg-red-500 text-white px-2 py-1 rounded-lg cursor-pointer hover:bg-red-600 transition duration-200"
-                                            onClick={() => resElem(el)}
+                                            onClick={() => resElem({ method: "DELETE", id: el.id, isOn: false })}
                                         >
                                             <IoIosTrash />
                                         </button>

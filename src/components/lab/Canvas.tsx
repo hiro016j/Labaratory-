@@ -488,7 +488,7 @@ const Canvas: React.FC = () => {
 
       </Stage>
           
-      <AktionBar element={elements} resElem={elements}/>
+      <AktionBar element={elements} resElem={handleObjChange} hoverChange={id => setMarkObj(id)}/>
     </div>
   );
 };
