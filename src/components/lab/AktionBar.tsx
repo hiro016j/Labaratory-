@@ -1,4 +1,5 @@
-import { FC } from "react"
+import { Box, Slider, Typography } from "@mui/material";
+import { FC, useState } from "react"
 import { IoIosRadioButtonOff, IoIosRadioButtonOn, IoIosTrash } from "react-icons/io";
 interface Element {
     id: number,
@@ -29,6 +30,14 @@ interface Acyion {
 }
 
 const AktionBar: FC<Acyion> = ({ element, resElem, hoverChange }) => {
+    const [value, setValue] = useState(50);
+
+    const handleChange = (_event: Event, newValue: number | number[]) => {
+        // Agar slider range bo‘lsa, massiv bo'lishi mumkin
+        if (typeof newValue === 'number') {
+            setValue(newValue);
+        }
+    };
     return (
         <div className="grid gap-2 justify-center w-[400px] h-[500px] overflow-y-auto overflow-x-hidden absolute top-2 right-2 rounded-lg z-50">
             {
@@ -44,14 +53,44 @@ const AktionBar: FC<Acyion> = ({ element, resElem, hoverChange }) => {
                                     <div className="w-[140px] right-[70px] absolute flex justify-start gap-4 items-center">
                                         <h1 className="text-gray-700"><b>V:</b> {el.isOn}</h1>
                                         <h1 className="text-gray-700"><b>R:</b>
-                                            <select name="rezistance" id="rezistance">
-                                                <option value="12">12</option>
-                                                <option value="12">13</option>
-                                                <option value="12">14</option>
-                                                <option value="12">15</option>
-                                                <option value="12">13</option>
-
-                                            </select>
+                                            {
+                                                el.type === "rezistor" || el.type === "led" ?
+                                                    <select name="rezistance" id="rezistance">
+                                                        <option value="10">10 Ω</option>
+                                                        <option value="100">100 Ω</option>
+                                                        <option value="220">220 Ω</option>
+                                                        <option value="330">330 Ω</option>
+                                                        <option value="470">470 Ω</option>
+                                                        <option value="1000">1k Ω</option>
+                                                        <option value="4700">4.7k Ω</option>
+                                                        <option value="10000">10k Ω</option>
+                                                        <option value="47000">47k Ω</option>
+                                                        <option value="100000">100k Ω</option>
+                                                    </select> : el.type === "potentiometer" ?
+                                                        <Box
+                                                        sx={{
+                                                          height: 300,
+                                                          display: 'flex',
+                                                          flexDirection: 'column',
+                                                          alignItems: 'center',
+                                                          justifyContent: 'center',
+                                                          mt: 4,
+                                                        }}
+                                                      >
+                                                        <Typography gutterBottom>Qiymat: {value} Ω</Typography>
+                                                        <Slider
+                                                          orientation="vertical"
+                                                          value={value}
+                                                          onChange={handleChange}
+                                                          min={0}
+                                                          max={1000}
+                                                          step={50}
+                                                          valueLabelDisplay="auto"
+                                                          color="secondary"
+                                                          sx={{ height: 200 }}
+                                                        />
+                                                      </Box> : " " + el.resistance
+                                            }
                                         </h1>
                                     </div>
                                     <div className="w-[70px] flex justify-end gap-1.5 items-center">
